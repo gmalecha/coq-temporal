@@ -1,0 +1,10 @@
+*.vo
+*.v.d
+*.glob
+*.aux
+*~
+_CoqPath
+Makefile.coq
+
+charge-core
+coq-ext-lib
