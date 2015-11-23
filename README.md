@@ -42,6 +42,11 @@ Building
 Once you have configured the dependencies, you can simply run ```make```
 to build everything.
 
+Bugs & Feature Requests
+-----------------------
+
+Please report bugs and feature requests on the github issue tracker.
+
 Adding Files
 ------------
 
