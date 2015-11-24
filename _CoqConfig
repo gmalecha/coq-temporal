@@ -4,6 +4,7 @@
 -Q examples TExamples
 
 theories/ActionStream.v
+theories/DiscreteStream.v
 theories/DiscreteLogic.v
 
 examples/Demo.v

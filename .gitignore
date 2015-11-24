@@ -4,6 +4,7 @@
 *.aux
 *~
 _CoqPath
+_CoqProject
 Makefile.coq
 
 charge-core
