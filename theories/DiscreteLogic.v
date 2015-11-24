@@ -9,7 +9,7 @@ Require Import ChargeCore.Logics.ILEmbed.
 Require ChargeCore.Logics.ILInsts.
 Require Import ChargeCore.Tactics.Tactics.
 
-Require Import Temporal.DiscreteStream.
+Require Import Temporal.ActionStream.
 
 Section parametric.
   Variable tlaState : Type.

@@ -3,7 +3,7 @@
 -Q theories Temporal
 -Q examples TExamples
 
-theories/DiscreteStream.v
+theories/ActionStream.v
 theories/DiscreteLogic.v
 
 examples/Demo.v
