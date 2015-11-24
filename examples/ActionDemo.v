@@ -1,5 +1,5 @@
 Require Import ExtLib.Structures.Applicative.
-Require Import Temporal.DiscreteLogic.
+Require Import Temporal.ActionLogic.
 Require Import ChargeCore.Tactics.Tactics.
 
 Set Implicit Arguments.
