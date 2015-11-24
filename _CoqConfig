@@ -5,6 +5,6 @@
 
 theories/ActionStream.v
 theories/DiscreteStream.v
-theories/DiscreteLogic.v
+theories/ActionLogic.v
 
 examples/Demo.v
