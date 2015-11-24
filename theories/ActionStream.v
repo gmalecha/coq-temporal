@@ -124,13 +124,34 @@ Section functorial.
     end.
 End functorial.
 
+Lemma continue_eta : forall {X} {Y} (a : @continue X Y),
+    a = match a with
+        | Discr _ b => Discr _ b
+        end.
+Proof.
+  destruct a; reflexivity.
+Qed.
+
+
 Theorem fmap_continue_compose : forall A B C (f : B -> C) (g : A -> B) x (tr : continue x),
     continue_eq (fmap_continue f (fmap_continue g tr)) (fmap_continue (fun x => f (g x)) tr).
 Proof.
   intros A B C f g.
   cofix cih.
   intros.
-Admitted.
+  destruct tr.
+  match goal with
+  | |- continue_eq ?X ?Y =>
+    refine (match eq_sym (continue_eta X) in _ = x
+                , eq_sym (continue_eta Y) in _ = y
+                  return continue_eq x y
+            with
+            | eq_refl , eq_refl => _
+            end)
+  end.
+  constructor.
+  eapply cih.
+Qed.
 
 Instance Functor_trace : Functor trace :=
 { fmap := fun _ _ mor tr =>

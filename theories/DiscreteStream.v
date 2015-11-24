@@ -60,6 +60,7 @@ End with_state.
 
 (* Functorial *)
 Require Import ExtLib.Structures.Functor.
+Require Import ExtLib.Structures.Applicative.
 
 Section functorial.
   Context {state1 state2 : Type}.
@@ -78,7 +79,10 @@ Proof.
   intros A B C f g.
   cofix cih.
   intros.
-Admitted.
+  constructor.
+  - destruct tr; reflexivity.
+  - destruct tr. simpl. eapply cih.
+Qed.
 
 Instance Functor_trace : Functor trace :=
 { fmap := fun _ _ mor tr =>
@@ -86,6 +90,20 @@ Instance Functor_trace : Functor trace :=
             | Continue st c => Continue (mor st) (fmap_trace mor c)
             end
 }.
+
+CoFixpoint forever {T} (v : T) : trace T :=
+  Continue v (forever v).
+
+CoFixpoint trace_ap {T U : Type} (f : trace (T -> U)) (x : trace T) : trace U :=
+  Continue ((hd f) (hd x)) (trace_ap (tl f) (tl x)).
+
+Instance Applicative_trace : Applicative trace :=
+{ pure := @forever
+; ap := @trace_ap
+}.
+
+Definition trace_zip {T U V : Type} (f : T -> U -> V) (a : trace T) (b : trace U) : trace V :=
+  ap (ap (pure f) a) b.
 
 Arguments skips_to {ST} _ _.
 Arguments hd {ST} _.

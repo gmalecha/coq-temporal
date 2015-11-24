@@ -136,15 +136,6 @@ Section parametric.
   Definition next (P : TraceProp) : TraceProp :=
     fun tr => P (tl tr).
 
-(*
-  Definition continuously (P : CActionProp) : ActionProp :=
-    fun start step =>
-      match step with
-      | ContinuousBy r f => P r (fun x => hybrid_join (f x) (snd (hybrid_split start)))
-      | _ => False
-      end.
-*)
-
   Definition stutter {T} (f : tlaState -> T) : ActionProp :=
     fun st st' => f st = f st'.
 
@@ -350,5 +341,62 @@ Arguments starts {_} _ _.
 Arguments now {_} _ _.
 Arguments stutter {_ _} _ _ _.
 Arguments starts {_} _ _.
+
+Require Import Coq.Classes.Morphisms.
+
+(** TODO: These should be generalized to [TraceVal], [ActionVal], and [StateVal] **)
+Section simulations.
+  Context {T U : Type}.
+  Local Transparent ILInsts.ILFun_Ops.
+
+  Variable f : U -> T.
+
+  Definition focusT (P : TraceProp T) : TraceProp U :=
+    fun tu => P (fmap f tu).
+
+  Definition focusS (P : StateProp T) : StateProp U :=
+    fun tu => P (f tu).
+
+  Definition focusA (P : ActionProp T) : ActionProp U :=
+    fun st st' => P (f st) (f st').
+
+  Theorem focusT_now : forall P, focusT (now P) -|- now (focusS P).
+  Proof.
+    compute; split; destruct t; auto.
+  Qed.
+
+  Theorem focusT_starts : forall P, focusT (starts P) -|- starts (focusA P).
+  Proof.
+    compute; split; destruct t; destruct t; auto.
+  Qed.
+
+End simulations.
+
+
+(* Temporal Existential Quantification *)
+Section temporal_exists.
+
+  Context {T U : Type}.
+  Local Transparent ILInsts.ILFun_Ops.
+
+  Definition texists (P : TraceProp (T * U)) : TraceProp U :=
+    fun tr : trace U => exists tr' : trace T,
+        P (trace_zip pair tr' tr).
+
+
+  Global Instance Proper_texists_lentails : Proper (lentails ==> lentails) texists.
+  Proof.
+    unfold texists. repeat red.
+    intros. destruct H0. exists x0. eapply H. eauto.
+  Qed.
+
+  Global Instance Proper_texists_lequiv : Proper (lequiv ==> lequiv) texists.
+  Proof.
+    unfold texists. split; repeat red; destruct 1; eexists; eapply H; eauto.
+  Qed.
+End temporal_exists.
+
+
+
 
 Export ChargeCore.Logics.ILogic.
