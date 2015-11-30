@@ -7,6 +7,8 @@ theories/ActionStream.v
 theories/ActionLogic.v
 theories/DiscreteStream.v
 theories/DiscreteLogic.v
+theories/DiscreteStreamP.v
+theories/DiscreteLogicP.v
 
 examples/ActionDemo.v
 examples/DiscreteDemo.v
