@@ -73,16 +73,6 @@ Proof. red. reflexivity. Qed.
 
 Require Import Coq.Classes.Morphisms.
 
-Instance Proper_starts_lentails {St}
-  : Proper (lentails ==> lentails) (@starts St).
-Proof.
-  red. red. intros.
-  unfold starts. red. simpl.
-  red in H. red in H. red in H.
-  intros.
-  eapply H. eassumption.
-Qed.
-
 Notation "[] e" := (always e) (at level 30).
 
 Goal |-- Sys -->> [] (now (lift2 eq x (pure 1))).
@@ -93,7 +83,7 @@ Proof.
   { charge_assumption. }
   { charge_assumption. }
   { apply always_tauto.
-    rewrite <- uncurry.
+    rewrite <- curry.
     rewrite now_starts_discretely_and.
     rewrite next_now.
     rewrite starts_impl.
