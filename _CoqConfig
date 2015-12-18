@@ -3,6 +3,7 @@
 -Q theories Temporal
 -Q examples TExamples
 
+theories/Lifting.v
 theories/ActionStream.v
 theories/ActionLogic.v
 theories/DiscreteStream.v

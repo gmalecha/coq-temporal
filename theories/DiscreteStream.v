@@ -131,10 +131,10 @@ Require Import ExtLib.Structures.Applicative.
 
 Section functorial.
   Context {state1 state2 : Type}.
-  Variable morphism : state2 -> state1.
+  Variable morphism : state1 -> state2.
 
-  CoFixpoint fmap_trace (tr : @trace state2)
-  : @trace state1 :=
+  CoFixpoint fmap_trace (tr : @trace state1)
+  : @trace state2 :=
     match tr with
     | Continue s c => Continue (morphism s) (fmap_trace c)
     end.
@@ -152,11 +152,7 @@ Proof.
 Qed.
 
 Instance Functor_trace : Functor trace :=
-{ fmap := fun _ _ mor tr =>
-            match tr with
-            | Continue st c => Continue (mor st) (fmap_trace mor c)
-            end
-}.
+{ fmap := @fmap_trace }.
 
 CoFixpoint forever {T} (v : T) : trace T :=
   Continue v (forever v).
@@ -181,6 +177,32 @@ Arguments Reflexive_skips_to {ST} _ : rename.
 Section extra_trace_properties.
   Context {T U V : Type} (Rt : T -> T -> Prop) (Ru : U -> U -> Prop) (Rv : V -> V -> Prop).
 
+  CoFixpoint prefixes {T} (acc : list T) (tr : trace T) : trace (list T) :=
+    match tr with
+    | Continue t tr => Continue acc (prefixes (t :: acc) tr)
+    end.
+
+  Lemma trace_zip_snd : forall {T U} (a : trace T) (b : trace U),
+      trace_eq eq (trace_zip (fun _ x => x) a b) b.
+  Proof using.
+    do 2 intro.
+    cofix.
+    destruct a; destruct b.
+    constructor.
+    - reflexivity.
+    - simpl.  simpl. eapply trace_zip_snd.
+  Qed.
+
+  Lemma trace_zip_fst : forall {T U} (a : trace T) (b : trace U),
+      trace_eq eq (trace_zip (fun x _ => x) a b) a.
+  Proof using.
+    do 2 intro.
+    cofix.
+    destruct a; destruct b.
+    constructor.
+    - reflexivity.
+    - simpl.  simpl. eapply trace_zip_fst.
+  Qed.
 
   Lemma trace_eq_equiv : forall (a b c d : trace T),
       trace_eq Rt b c ->

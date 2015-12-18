@@ -11,6 +11,7 @@ Require Import ChargeCore.Logics.ILEmbed.
 Require ChargeCore.Logics.ILInsts.
 Require Import ChargeCore.Tactics.Tactics.
 
+Require Import Temporal.Lifting.
 Require Import Temporal.DiscreteStream.
 
 Section parametric.
@@ -163,10 +164,10 @@ Section parametric.
     abstract (do 2 red; intros; rewrite H; reflexivity).
   Defined.
 
-  Definition pre {T} (f : tlaState -> T) : ActionVal T :=
+  Definition pre {T} (f : StateVal T) : ActionVal T :=
     fun st _ => f st.
 
-  Definition post {T} (f : tlaState -> T) : ActionVal T :=
+  Definition post {T} (f : StateVal T) : ActionVal T :=
     fun _ st' => f st'.
 
   Instance Proper_tpred : Proper (lequiv ==> trace_eq eq ==> iff) tpred.
@@ -497,69 +498,87 @@ Section temporal_exists.
     destruct P; simpl in *.
     eapply ILPreFrm_closed.
     clear.
-    symmetry.
-    etransitivity.
-    2: eapply Proper_Continue; [ reflexivity | ].
-    2: symmetry; etransitivity; [ eapply fmap_trace_trace_zip_compose | simpl ].
-    eapply trace_eq_eta.
-    generalize dependent (tl x).
-    generalize dependent (tl t).
-    clear.
+    rewrite fmap_trace_trace_zip_compose.
+    simpl.
+    revert x t.
     cofix.
+    destruct x. destruct t0.
     constructor.
-    { destruct t; destruct t0; reflexivity. }
-    { destruct t; destruct t0; simpl. eapply texistsL. }
+    - reflexivity.
+    - eapply texistsL.
   Qed.
 
-  Definition exactTrace (tr : trace T) : TraceProp T := mkTraceProp (trace_eq eq tr) _.
+  Definition exactTrace (tr : trace T) : TraceProp T :=
+    mkTraceProp (trace_eq eq tr) _.
 
   Lemma exactTrace_exact : forall tr tr',
       trace_eq eq tr tr' ->
       tpred (exactTrace tr) tr'.
   Proof. compute; auto. Qed.
   Opaque exactTrace.
+End temporal_exists.
 
-  Theorem texistsR : forall (P : TraceProp U) (Q : TraceProp (T * U)),
-      (exists tr' : trace T, focusT snd P //\\ focusT fst (exactTrace tr') |-- Q) ->
-      P |-- texists Q.
+Arguments texists _ {_} _.
+
+(* Notation for fields *)
+Notation "x # y" := (PreFun.compose y x) (at level 0).
+
+Section temporal_history.
+  Local Transparent ILInsts.ILFun_Ops.
+  Local Transparent ILInsts.ILPre_Ops.
+
+  Local Opaque trace_zip.
+  Local Opaque fmap_trace.
+
+  Context {T U : Type}.
+  Theorem texists_history
+  : forall (P : TraceProp U) (x : StateVal U T),
+      P -|- texists (list T)
+               (     focusT snd P
+                //\\ now (lift2 eq fst (pure nil))
+                //\\ always (starts (lift2 eq (post fst)
+                                           (lift2 cons (pre snd#x)
+                                                  (pre fst))))).
   Proof.
-    intros. unfold texists.
-    simpl. intros.
-    destruct H.
-    exists x. eapply H.
+    intros. simpl. unfold texists.
     split.
-    { unfold focusT.
-      simpl.
-      eapply TraceProp_trace_eq; [ | eassumption ].
-      clear.
-      etransitivity.
-      2: eapply Proper_Continue; [ reflexivity | ].
-      2: symmetry; etransitivity; [ eapply fmap_trace_trace_zip_compose | simpl ].
-      eapply trace_eq_eta.
-      generalize dependent (tl x).
-      generalize dependent (tl t).
-      clear.
-      cofix.
-      constructor.
-      { destruct t; destruct t0; reflexivity. }
-      { destruct t; destruct t0; simpl. eapply texistsR. } }
-    { simpl.
-      eapply exactTrace_exact.
-      clear.
-      etransitivity.
-      2: eapply Proper_Continue; [ reflexivity | ].
-      2: symmetry; etransitivity; [ eapply fmap_trace_trace_zip_compose | simpl ].
-      eapply trace_eq_eta.
-      generalize dependent (tl x).
-      generalize dependent (tl t).
-      clear.
-      cofix.
-      constructor.
-      { destruct t; destruct t0; reflexivity. }
-      { destruct t; destruct t0; simpl. eapply texistsR. } }
+    { simpl. intros.
+      exists (fmap (List.map x) (prefixes nil t)).
+      split; [ | split ].
+      - eapply Proper_tpred; [ reflexivity | | eassumption ].
+        rewrite fmap_trace_trace_zip_compose.
+        simpl.
+        clear. rewrite trace_zip_snd. reflexivity.
+      - simpl. destruct t. reflexivity.
+      - simpl. intros.
+        unfold pre, post.
+        assert (exists rst pre,
+                   skips_to rst t /\
+                   trace_eq eq s' (trace_zip pair (fmap_trace (List.map x) (prefixes pre rst)) rst)).
+        { clear - H0.
+          remember (trace_zip pair (fmap_trace (List.map x) (prefixes nil t)) t).
+          generalize dependent (@nil U). generalize dependent t.
+          induction H0.
+          { intros. subst. exists t0. exists l. split; eauto.
+            reflexivity. }
+          { intros. subst.
+            destruct (IHskips_to (tl t0) (List.cons (hd t0) l)).
+            { destruct t0. reflexivity. }
+            { destruct H. destruct H.
+              exists x0. eexists. split; eauto.
+              constructor 2. eassumption. } } }
+        { clear H0. destruct H1. destruct H0. destruct H0.
+          rewrite H1.
+          destruct x0. destruct x0. reflexivity. } }
+    { simpl. intros.
+      destruct H. destruct H.
+      clear H0.
+      eapply Proper_tpred; [ reflexivity | | eassumption ].
+      rewrite fmap_trace_trace_zip_compose. simpl.
+      rewrite trace_zip_snd. reflexivity. }
   Qed.
 
-End temporal_exists.
+End temporal_history.
 
 
 Export ChargeCore.Logics.ILogic.
